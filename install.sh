@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="Heroku"
-MODULE_NAME="heroku"
-REPO_URL="${HEROKU_REPO_URL:-https://github.com/coddrago/Heroku.git}"
-VENV_DIR="${HEROKU_VENV_DIR:-.venv}"
-LOG_FILE="heroku-install.log"
+APP_NAME="Aetheris"
+MODULE_NAME="aetheris"
+REPO_URL="${AETHERIS_REPO_URL:-https://github.com/elisartix/Aetheris.git}"
+VENV_DIR="${AETHERIS_VENV_DIR:-.venv}"
+LOG_FILE="aetheris-install.log"
 
 if [ "${SUDO_USER:-}" != "" ] && command -v sudo >/dev/null 2>&1; then
 	RUN_AS_USER=(sudo -u "$SUDO_USER")
