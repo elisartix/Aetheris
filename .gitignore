@@ -158,6 +158,10 @@ config.json
 *.png
 *.webp
 *.webm
+# Keep the Aetheris core modules in the repository; only external user modules
+# are runtime data and should remain ignored.
+!aetheris/modules/
+!aetheris/modules/*.py
 *.tgs
 *.mp4
 *.mp3
@@ -175,3 +179,31 @@ Pipfile.lock
 
 heroku.log.*
 unknown_errors.txt
+
+# Личные файлы и папки (не из репы)
+_external/
+assets/
+bikeapp/
+bot/
+cmdhost/
+copyuser_profiles/
+deepseekreg/
+freellm-api/
+limoka_search/
+mini_site/
+modules/
+script/
+temp/
+tg/
+tts_parts/
+.config/
+.vibe/
+account.json
+chat.json
+admins_list.txt
+ah_simple.txt
+ah_text.txt
+elisartix_chat.json
+attachment*
+Launcher.exe
+SpeedTestOokla.py
