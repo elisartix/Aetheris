@@ -1,4 +1,4 @@
-aetheris-tl @ git+https://github.com/elisartix/aetheris-tl.git
+aetheris-tl @ git+https://github.com/elisartix/aetheris-tl.git@509bf4c8c93294da5b23fdb8bbf2ae3ad39af5ba
 pyaes
 aiofile==3.8.1
 aiofiles==24.1.0
