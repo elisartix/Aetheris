@@ -11,7 +11,6 @@ certifi==2024.8.30
 grapheme==0.6.0
 emoji>=1.7
 psutil==6.0.0
-TgCrypto-pyrofork
 rsa==4.9
 ruamel.yaml==0.17.21
 bs4==0.0.2
