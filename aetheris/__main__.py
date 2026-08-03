@@ -98,25 +98,31 @@ def get_file_hash(filename):
 
 
 def deps():
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--upgrade",
-            "-q",
-            "--disable-pip-version-check",
-            "--no-warn-script-location",
-            "-r",
-            "requirements.txt",
-        ],
-        check=True,
-        timeout=600,
-        capture_output=True,
-    )
-    with open(".requirements_hash", "w") as f:
-        f.write(get_file_hash("requirements.txt"))
+    try:
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "-q",
+                "--disable-pip-version-check",
+                "--no-warn-script-location",
+                "-r",
+                "requirements.txt",
+            ],
+            check=True,
+            timeout=600,
+            capture_output=True,
+        )
+    except Exception as e:
+        print(f"\u26a0\ufe0f pip install failed: {e}")
+    try:
+        with open(".requirements_hash", "w") as f:
+            f.write(get_file_hash("requirements.txt"))
+    except Exception:
+        pass
 
 
 if (
