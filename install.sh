@@ -125,4 +125,8 @@ touch .setup_complete
 rm -f "$LOG_FILE"
 
 ok "Installation complete!"
+# Auto-add --root if running as root, preserve other user args
+if [ "$(id -u)" -eq 0 ] && ! echo " $* " | grep -q " --root "; then
+    set -- --root "$@"
+fi
 start_app "$@"
