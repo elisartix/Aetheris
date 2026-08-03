@@ -181,10 +181,9 @@ else:
         deps()
         restart()
 
-    if "AETHERIS_DO_NOT_RESTART" in os.environ:
-        del os.environ["AETHERIS_DO_NOT_RESTART"]
-    if "AETHERIS_DO_NOT_RESTART2" in os.environ:
-        del os.environ["AETHERIS_DO_NOT_RESTART2"]
+    # NOTE: DO NOT delete AETHERIS_DO_NOT_RESTART* here.
+    # The restart counter in _internal.py depends on them persisting
+    # across os.execl calls. Deleting them causes infinite restart loops.
 
     prev_hash = None
     if os.path.exists(".requirements_hash"):
