@@ -357,7 +357,15 @@ class Database(dict):
         try:
             return self[owner][key]
         except KeyError:
-            return default
+            pass
+        # Legacy namespace fallback: modules read `heroku.*` but the DB
+        # stores `aetheris.*` (heroku.* keys are converted on load).
+        if owner.startswith("heroku."):
+            try:
+                return self["aetheris." + owner[len("heroku.") :]][key]
+            except KeyError:
+                pass
+        return default
 
     def set(self, owner: str, key: str, value: JSONSerializable) -> bool:
         """Set database key"""
@@ -381,6 +389,11 @@ class Database(dict):
                 f"{key=} ({type(value)=}) to database. It is not "
                 "JSON-serializable value which will cause errors"
             )
+
+        # Legacy namespace mapping: writes to `heroku.*` land in `aetheris.*`
+        # so both legacy modules and core read the same values.
+        if owner.startswith("heroku."):
+            owner = "aetheris." + owner[len("heroku.") :]
 
         super().setdefault(owner, {})[key] = value
         return self.save()

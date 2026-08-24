@@ -18,17 +18,19 @@ import contextlib
 import contextvars
 import copy
 import importlib
+import importlib.abc
 import importlib.machinery
 import importlib.util
 import inspect
 import logging
 import os
 import re
+import shutil
 import sys
 import typing
 from functools import wraps
 from pathlib import Path
-from types import FunctionType
+from types import FunctionType, ModuleType
 from uuid import uuid4
 
 from aetheris_tl.tl.tlobject import TLObject
@@ -157,6 +159,21 @@ IMPORT_PIP_ALIASES = {
     "pil": "Pillow",
     "aetheris_tl": "Aetheris-TL-New",
     "markdown_it": "markdown-it-py",
+    # Framework-internal modules — skip pip install
+    "aetheris.inline": "",
+    "aetheris.loader": "",
+    "aetheris.utils": "",
+    "aetheris.main": "",
+    "aetheris.security": "",
+    "aetheris.validators": "",
+    "aetheris.dispatcher": "",
+    "aetheris.configurator": "",
+    "aetheris.log": "",
+    "aetheris.version": "",
+    "herokutl": "",
+    "herokutl.tl": "",
+    "hikka": "",
+    "hikkatl": "",
 }
 
 USER_INSTALL = "PIP_TARGET" not in os.environ and "VIRTUAL_ENV" not in os.environ
@@ -336,6 +353,195 @@ def _iter_module_files(
             and not entry.name.startswith("_")
             and (include(entry.name) if include else True)
         ]
+
+
+def _iter_module_dirs(
+    directory: str | Path,
+    *,
+    include: typing.Callable[[str], bool] | None = None,
+) -> list[str]:
+    """Iterate package dirs (multi-file modules) in a directory."""
+    with os.scandir(directory) as entries:
+        return [
+            entry.path
+            for entry in entries
+            if entry.is_dir()
+            and not entry.name.startswith(("_", "."))
+            and entry.name != "langpacks"
+            and (include(entry.name) if include else True)
+        ]
+
+
+def _find_package_entry(directory: str | Path) -> str | None:
+    """Find the entry python file of a multi-file module package.
+
+    Priority: ``__init__.py`` -> single .py file -> first file defining a
+    ``loader.Module`` subclass -> any .py file.
+    """
+    try:
+        files = [
+            name
+            for name in os.listdir(directory)
+            if name.endswith(".py")
+            and (not name.startswith("_") or name in ("__init__.py", "__main__.py"))
+        ]
+    except OSError:
+        return None
+
+    if "__init__.py" in files:
+        return "__init__.py"
+
+    if len(files) == 1:
+        return files[0]
+
+    for name in files:
+        try:
+            source = Path(directory, name).read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+
+        if re.search(r"class\s+\w+\s*\([^)]*Module", source):
+            return name
+
+    return files[0] if files else None
+
+
+def _extract_module_package(data: bytes, dest: str) -> str | None:
+    """Safely extract a multi-file module zip into ``dest``.
+
+    Returns the name of the entry python file (see ``_find_package_entry``),
+    or ``None`` if the archive has no usable module file.
+    Guards against path traversal and skips junk entries.
+    """
+    import io
+    import shutil
+    import tempfile
+    import zipfile
+
+    if not data.startswith(b"PK\x03\x04"):
+        return None
+
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        files = []
+        for info in zf.infolist():
+            name = info.filename.replace("\\", "/")
+            if name.startswith("/") or ".." in name.split("/"):
+                raise ValueError(f"Unsafe path in module archive: {name!r}")
+            if info.is_dir():
+                continue
+            if (
+                name.startswith("__pycache__/")
+                or name.endswith(".pyc")
+                or name.startswith(".")
+                or "/." in name
+            ):
+                continue
+            files.append((name, zf.read(info)))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        stage = os.path.join(tmp, "stage")
+        for name, content in files:
+            target = os.path.join(stage, name)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            with open(target, "wb") as out:
+                out.write(content)
+
+        # Unwrap a single top-level folder (common when zipping a repo dir)
+        entries = [e for e in os.listdir(stage) if not e.startswith(".")]
+        if len(entries) == 1 and os.path.isdir(os.path.join(stage, entries[0])):
+            inner = os.path.join(stage, entries[0])
+            unwrapped = os.path.join(tmp, "unwrapped")
+            os.rename(inner, unwrapped)
+            stage = unwrapped
+
+        entry = _find_package_entry(stage)
+        if not entry:
+            return None
+
+        if os.path.isdir(dest):
+            shutil.rmtree(dest, ignore_errors=True)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copytree(stage, dest)
+
+        return entry
+
+
+class _AliasLoader(importlib.abc.Loader):
+    """Loader that aliases an already-imported module under another name."""
+
+    def __init__(self, target):
+        self._target = target
+
+    def create_module(self, spec):
+        return self._target
+
+    def exec_module(self, module):
+        pass
+
+
+class _ExternalPackageFinder(importlib.abc.MetaPathFinder):
+    """Resolves imports for multi-file module packages.
+
+    Package modules live as real python packages under
+    ``aetheris.external.<uid>`` (isolated ``__path__`` pointing at the
+    package folder). This finder redirects legacy Hikka-style imports
+    (``from .. import loader``, ``from ..inline.types import InlineCall``)
+    to the real ``aetheris.*`` modules, so package modules keep working
+    with the same imports single-file modules use.
+    """
+
+    def __init__(self):
+        self.packages: dict[str, str] = {}
+
+    def register(self, uid: str, pkg_dir: str) -> None:
+        self.packages[uid] = pkg_dir
+
+    def unregister(self, uid: str) -> None:
+        self.packages.pop(uid, None)
+
+    def find_spec(self, fullname, path=None, target=None):
+        if not fullname.startswith("aetheris.external") or fullname == (
+            "aetheris.external"
+        ):
+            return None
+
+        rest = fullname[len("aetheris.external") :].lstrip(".")
+        uid, _, sub = rest.partition(".")
+
+        if uid in self.packages:
+            pkg_dir = self.packages[uid]
+
+            if not sub:
+                return None  # the uid package itself is registered in sys.modules
+
+            file_path = os.path.join(pkg_dir, sub.replace(".", os.sep) + ".py")
+            if os.path.isfile(file_path):
+                return importlib.util.spec_from_file_location(fullname, file_path)
+
+            return None
+
+        # Legacy Hikka imports: from .. import loader -> aetheris.loader
+        mapped = "aetheris." + rest
+        try:
+            target_mod = importlib.import_module(mapped)
+        except Exception:
+            return None
+
+        return importlib.util.spec_from_loader(fullname, _AliasLoader(target_mod))
+
+
+_external_packages_finder = _ExternalPackageFinder()
+
+if _external_packages_finder not in sys.meta_path:
+    sys.meta_path.insert(0, _external_packages_finder)
+
+
+def _ensure_external_namespace() -> None:
+    """Create the aetheris.external namespace package (once)."""
+    if "aetheris.external" not in sys.modules:
+        ns = ModuleType("aetheris.external")
+        ns.__path__ = []
+        sys.modules["aetheris.external"] = ns
 
 
 def translatable_docstring(cls):
@@ -650,6 +856,13 @@ class Modules:
                         include=lambda name: name.endswith(f"{self.client.tg_id}.py"),
                     )
                 ]
+                + [
+                    Path(mod).resolve()
+                    for mod in _iter_module_dirs(
+                        LOADED_MODULES_DIR,
+                        include=lambda name: name.endswith(f"_{self.client.tg_id}"),
+                    )
+                ]
             )
 
         loaded = []
@@ -672,6 +885,10 @@ class Modules:
 
         for mod in modules:
             try:
+                if os.path.isdir(mod):
+                    loaded += [await self._register_package(mod, origin)]
+                    continue
+
                 mod_shortname = os.path.basename(mod).rsplit(".py", maxsplit=1)[0]
                 module_name = f"{__package__}.{MODULES_NAME}.{mod_shortname}"
                 user_friendly_origin = (
@@ -694,6 +911,47 @@ class Modules:
             except Exception as e:
                 logger.exception("Failed to load module %s due to %s:", mod, e)
 
+        return loaded
+
+    async def _register_package(
+        self,
+        mod: str | os.PathLike,
+        origin: str = "<core>",
+    ) -> Module:
+        """Load a multi-file module (package dir) from loaded_modules."""
+        pkg_dir = str(Path(mod).resolve())
+        entry_name = _find_package_entry(pkg_dir)
+
+        if not entry_name:
+            raise ValueError(f"No entry python file found in package {pkg_dir}")
+
+        mod_shortname = os.path.basename(pkg_dir)
+        module_name = f"aetheris.external.{mod_shortname}"
+        user_friendly_origin = (
+            "<core {}>" if origin == "<core>" else "<file {}>"
+        ).format(module_name)
+
+        logger.debug("Loading package %s from filesystem", module_name)
+
+        spec = importlib.machinery.ModuleSpec(
+            module_name,
+            StringLoader(
+                Path(pkg_dir, entry_name).read_text(encoding="utf-8"),
+                user_friendly_origin,
+            ),
+            origin=user_friendly_origin,
+        )
+        spec.submodule_search_locations = [pkg_dir]
+
+        if pkg_dir not in sys.path:
+            sys.path.insert(0, pkg_dir)
+
+        _ensure_external_namespace()
+        _external_packages_finder.register(mod_shortname, pkg_dir)
+
+        loaded = await self.register_module(spec, module_name, origin)
+
+        logger.debug("Successfully loaded package %s from filesystem", module_name)
         return loaded
 
     async def register_module(
@@ -746,9 +1004,9 @@ class Modules:
 
                     exc_name = (getattr(e, "name", None) or "").lower()
 
-                    requirements.extend(
-                        [IMPORT_PIP_ALIASES.get(exc_name, exc_name or e.name or "")]
-                    )
+                    alias = IMPORT_PIP_ALIASES.get(exc_name, exc_name or e.name or "")
+                    if alias:
+                        requirements.extend([alias])
 
                     result = await self.lookup("LoaderMod").install_requirements(
                         requirements
@@ -1353,6 +1611,19 @@ class Modules:
                 if os.path.isfile(path):
                     os.remove(path)
                     logger.debug("Removed %s file at path %s", name, path)
+
+                package_path = os.path.join(
+                    LOADED_MODULES_DIR,
+                    f"{name}_{self.client.tg_id}",
+                )
+
+                if os.path.isdir(package_path):
+                    shutil.rmtree(package_path, ignore_errors=True)
+                    logger.debug("Removed %s package at path %s", name, package_path)
+
+                with contextlib.suppress(Exception):
+                    _external_packages_finder.unregister(f"{name}_{self.client.tg_id}")
+                    _external_packages_finder.unregister(name)
 
                 logger.debug("Removing module %s for unload", module)
                 self.modules.remove(module)

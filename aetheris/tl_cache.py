@@ -112,6 +112,16 @@ class CustomTelegramClient(TelegramClient):
         self.loader: "Modules"
         self.aetheris_inline: "InlineManager"
 
+    @property
+    def heroku_me(self) -> "User":
+        """Legacy Heroku-compat alias for the cached 'me' entity.
+
+        Heroku-style external modules and libs (e.g. SunnexGB rich_message_lib)
+        read ``client.heroku_me.premium``; Aetheris stores the same object as
+        ``client.aetheris_me`` / ``client.hikka_me``.
+        """
+        return getattr(self, "aetheris_me", None) or getattr(self, "hikka_me", None)
+
     async def connect(self, unix_socket_path: str | None = None):
         if self.session is None:
             raise ValueError(

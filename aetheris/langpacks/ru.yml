@@ -576,6 +576,7 @@ loader:
   bad_unicode: "<tg-emoji emoji-id=5210952531676504517>🚫</tg-emoji> <b>Неверная кодировка модуля</b>"
   load_failed: "<tg-emoji emoji-id=5210952531676504517>🚫</tg-emoji> <b>Загрузка не увенчалась успехом. Смотри логи.</b>"
   loaded: "<tg-emoji emoji-id=5134452506935427991>🪐</tg-emoji> <b>Модуль</b> <code>{}</code>{} <b>загружен {}</b>{}{}{}{}{}{}{}{}"
+  package_loaded: "<tg-emoji emoji-id=5134452506935427991>🪐</tg-emoji> <b>Модуль</b> <code>{}</code> <b>загружен как пакет</b>"
   no_class: "<b>А что выгружать то?</b>"
   unloaded: "{} <b>Модуль {} выгружен.</b>"
   unload_suggestions: "<tg-emoji emoji-id=5253780051471642059>❌</tg-emoji> <b>Модуль</b> <code>{}</code> <b>не найден.</b>\n\n<b>Возможно, ты имел в виду:</b>"

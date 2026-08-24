@@ -591,6 +591,7 @@ loader:
   bad_unicode: "<tg-emoji emoji-id=5210952531676504517>🚫</tg-emoji> <b>Invawid Unyicode fowmatting in moduwe</b>"
   load_failed: "<tg-emoji emoji-id=5210952531676504517>🚫</tg-emoji> <b>Woading faiwed. See wogs fow detaiws >.<</b>"
   loaded: "<tg-emoji emoji-id=5134452506935427991>🪐</tg-emoji> <b>Moduwe</b> <code>{}</code>{} <b>woaded {}</b>{}{}{}{}{}{}"
+  package_loaded: "<tg-emoji emoji-id=5134452506935427991>🪐</tg-emoji> <b>Module</b> <code>{}</code> <b>loaded as a package</b>"
   no_class: "<b>What cwass nyeeds to be unwoaded?</b>"
   unloaded: "{} <b>Moduwe {} unwoaded.</b>"
   unload_suggestions: "<tg-emoji emoji-id=5253780051471642059>❌</tg-emoji> <b>Moduwe</b> <code>{}</code> <b>nyot found.</b>\n\n<b>Maybe you meant:</b>"

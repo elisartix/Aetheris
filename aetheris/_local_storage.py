@@ -149,12 +149,12 @@ class RemoteStorage:
 
         return url, repo, module_name
 
-    async def fetch(self, url: str, auth: str | None = None) -> str:
+    async def fetch(self, url: str, auth: str | None = None) -> str | bytes:
         """
         Fetches the module from the remote storage.
         :param url: URL to the module.
         :param auth: Optional authentication string in the format "username:password".
-        :return: Module source code.
+        :return: Module source code (str) or raw archive bytes for zip packages.
         """
         url, repo, module_name = self._parse_url(url)
         try:
@@ -177,4 +177,4 @@ class RemoteStorage:
 
         self._local_storage.save(repo, module_name, r.text)
 
-        return r.text
+        return r.content

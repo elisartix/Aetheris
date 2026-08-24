@@ -590,6 +590,7 @@ loader:
   bad_unicode: "<tg-emoji emoji-id=5210952531676504517>🚫</tg-emoji> <b>1nv4l1d Un1c0d3 f0rm4771ng 1n m0dul3</b>"
   load_failed: "<tg-emoji emoji-id=5210952531676504517>🚫</tg-emoji> <b>L04d1ng f41l3d. S33 l0g5 4 d3741l5</b>"
   loaded: "<tg-emoji emoji-id=5134452506935427991>🪐</tg-emoji> <b>M0dul3</b> <code>{}</code>{} <b>l04d3d {}</b>{}{}{}{}{}{}{}{}"
+  package_loaded: "<tg-emoji emoji-id=5134452506935427991>🪐</tg-emoji> <b>Module</b> <code>{}</code> <b>loaded as a package</b>"
   no_class: "<b>Wh47 cl455 n33d5 2 b3 unl04d3d?</b>"
   unloaded: "{} <b>M0dul3 {} unl04d3d.</b>"
   unload_suggestions: "<tg-emoji emoji-id=5253780051471642059>❌</tg-emoji> <b>M0dul3</b> <code>{}</code> <b>n07 f0und.</b>\n\n<b>M4yb3 u m34n7:</b>"
