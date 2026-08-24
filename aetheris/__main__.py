@@ -15,6 +15,7 @@
 import getpass
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -162,7 +163,11 @@ else:
         try:
             import aetheris_tl  # noqa: F811
 
-            if tuple(map(int, aetheris_tl.__version__.split("."))) < (1, 7, 2):
+            ver_ = tuple(
+                int(match.group()) if (match := re.match(r"\d+", part)) else 0
+                for part in aetheris_tl.__version__.split(".")
+            )
+            if ver_ < (1, 7, 2):
                 raise ImportError
         except ImportError:
             print("\U0001f504 Installing dependencies...")

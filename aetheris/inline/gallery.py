@@ -12,7 +12,6 @@
 
 import asyncio
 import contextlib
-import copy
 import functools
 import logging
 import os
@@ -27,6 +26,7 @@ from aetheris_tl.errors.rpcerrorlist import ChatSendInlineForbiddenError
 from aetheris_tl.tl.types import Message
 
 from .. import main, utils
+from .._internal import tag_client_id
 from ..types import AetherisReplyMarkup
 from .types import InlineMessage, InlineUnit
 
@@ -50,6 +50,7 @@ class ListGalleryHelper:
 
 
 class Gallery(InlineUnit):
+    @tag_client_id("_client.tg_id")
     async def gallery(
         self: "InlineManager",
         message: Message | int,
@@ -93,9 +94,6 @@ class Gallery(InlineUnit):
         :param silent: Whether the gallery must be sent silently (w/o "Opening gallery..." message)
         :return: If gallery is sent, returns :obj:`InlineMessage`, otherwise returns `False`
         """
-        with contextlib.suppress(AttributeError):
-            _aetheris_client_id_logging_tag = copy.copy(self._client.tg_id)  # noqa: F841
-
         custom_buttons = self._validate_markup(custom_buttons)
 
         if not (
@@ -283,6 +281,8 @@ class Gallery(InlineUnit):
             m = await self._invoke_unit(unit_id, message)
         except ChatSendInlineForbiddenError:
             await answer(self.translator.getkey("inline.inline403"))
+            del self._units[unit_id]
+            return False
         except Exception:
             logger.exception("Error sending inline gallery")
 
@@ -291,7 +291,6 @@ class Gallery(InlineUnit):
             if _reattempt:
                 logger.exception("Can't send gallery")
 
-                del self._units[unit_id]
                 await answer(
                     self.translator.getkey("inline.invoke_failed_logs").format(
                         utils.escape_html(
@@ -393,9 +392,12 @@ class Gallery(InlineUnit):
         while True:
             await asyncio.sleep(7)
 
+            if unit_id not in self._units:
+                return
+
             unit = self._units[unit_id]
 
-            if unit_id not in self._units or not unit.get("slideshow", False):
+            if not unit.get("slideshow", False):
                 return
 
             if unit["current_index"] + 1 >= len(unit["photos"]) and isinstance(

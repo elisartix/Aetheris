@@ -157,6 +157,16 @@ def get_entity_url(
     )
 
 
+def get_link(user: User | Channel, /) -> str:
+    """
+    Get telegram permalink to entity
+    :param user: User or channel
+    :return: Link to entity
+    """
+    return get_entity_url(user)
+
+
+
 def remove_emoji(text: str) -> str:
     """
     Removes all emoji from text
@@ -199,23 +209,6 @@ def check_url(url: str) -> bool:
         return bool(urlparse(url).netloc)
     except Exception:
         return False
-
-
-def get_link(user: User | Channel, /) -> str:
-    """
-    Get telegram permalink to entity
-    :param user: User or channel
-    :return: Link to entity
-    """
-    return (
-        f"tg://user?id={user.id}"
-        if isinstance(user, User)
-        else (
-            f"tg://resolve?domain={user.username}"
-            if getattr(user, "username", None)
-            else ""
-        )
-    )
 
 
 async def asset_channel(
@@ -403,6 +396,8 @@ async def asset_forum_topic(
         )
         await fw_protect()
         for found_topic in result.topics:
+            if isinstance(found_topic, ForumTopicDeleted):
+                continue
             if found_topic.title == topic_title:
                 forums_cache.setdefault(entity.title, {})[topic_title] = found_topic.id
                 return found_topic.id

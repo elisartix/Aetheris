@@ -1,7 +1,5 @@
 aetheris-tl @ git+https://github.com/elisartix/aetheris-tl.git@509bf4c8c93294da5b23fdb8bbf2ae3ad39af5ba
 pyaes
-aiofile==3.8.1
-aiofiles==24.1.0
 gitpython==3.1.50
 deep-translator
 meval==2.5
@@ -13,7 +11,6 @@ emoji>=1.7
 psutil==6.0.0
 rsa==4.9
 ruamel.yaml==0.17.21
-bs4==0.0.2
 orjson
 Pillow
 

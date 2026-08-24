@@ -619,7 +619,8 @@ class AetherisSecurityMod(loader.Module):
                 list(set(self._db.get(main.__name__, "nonickusers", []) + [user.id])),
             )
 
-            await message.edit(
+            await utils.answer(
+                message,
                 self.strings[f"{group}_added"].format(
                     user.id,
                     utils.escape_html(get_display_name(user)),
@@ -628,11 +629,12 @@ class AetherisSecurityMod(loader.Module):
                 + self.strings["user_nn"].format(
                     user.id,
                     utils.escape_html(get_display_name(user)),
-                )
+                ),
             )
             return
 
-        await message.edit(
+        await utils.answer(
+            message,
             (
                 self.strings[f"{group}_added"].format(
                     user.id,
@@ -730,7 +732,7 @@ class AetherisSecurityMod(loader.Module):
                 "\n".join(
                     [
                         self.strings["li"].format(
-                            i.id, utils.escape_html(get_display_name(i))
+                            utils.get_entity_url(i), utils.escape_html(get_display_name(i))
                         )
                         + (f" ({p})" if p else "")
                         for i, p in zip(_resolved_users, _and_prefixes)

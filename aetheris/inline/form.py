@@ -28,6 +28,7 @@ from aetheris_tl.errors.rpcerrorlist import ChatSendInlineForbiddenError
 from aetheris_tl.tl.types import InputGeoPoint, Message
 
 from .. import main, utils
+from .._internal import tag_client_id
 from ..types import AetherisReplyMarkup
 from .types import InlineMessage, InlineUnit
 
@@ -57,6 +58,7 @@ class Placeholder:
 
 
 class Form(InlineUnit):
+    @tag_client_id("_client.tg_id")
     async def form(
         self: "InlineManager",
         text: str,
@@ -76,6 +78,7 @@ class Form(InlineUnit):
         video: str | None = None,
         location: str | None = None,
         audio: dict | str | None = None,
+        rich_message: typing.Any = None,
         silent: bool = False,
     ) -> InlineMessage | bool:
         """
@@ -107,9 +110,6 @@ class Form(InlineUnit):
         :param silent: Whether the form must be sent silently (w/o "Opening form..." message)
         :return: If form is sent, returns :obj:`InlineMessage`, otherwise returns `False`
         """
-        with contextlib.suppress(AttributeError):
-            _aetheris_client_id_logging_tag = copy.copy(self._client.tg_id)  # noqa: F841
-
         if reply_markup is None:
             reply_markup = []
 
@@ -324,7 +324,8 @@ class Form(InlineUnit):
             **({"gif": gif} if gif else {}),
             **({"location": location} if location else {}),
             **({"audio": audio} if audio else {}),
-            **({"location": location} if location else {}),
+            **({"rich_message": rich_message} if rich_message is not None else {}),
+            **({"file": file, "mime_type": mime_type} if file else {}),
             **({"perms_map": perms_map} if perms_map else {}),
             **({"message": message} if isinstance(message, Message) else {}),
             **({"force_me": force_me} if force_me else {}),
@@ -347,6 +348,8 @@ class Form(InlineUnit):
             m = await self._invoke_unit(unit_id, message)
         except ChatSendInlineForbiddenError:
             await answer(self.translator.getkey("inline.inline403"))
+            del self._units[unit_id]
+            return False
         except Exception as e:
             logger.exception("Can't send form")
 
@@ -464,6 +467,21 @@ class Form(InlineUnit):
         form_text = "🪐" if form.get("premium_emoji_pre_edit") else form.get("text")
         try:
             match True:
+                case _ if "rich_message" in form:
+                    rich_value = form["rich_message"]
+                    if not isinstance(rich_value, str):
+                        raise TypeError("Inline bot Rich forms require HTML text")
+                    await inline_query.answer(
+                        [
+                            await inline_query.rich_article(
+                                title="Aetheris",
+                                html=rich_value,
+                                buttons=self.generate_markup(form["uid"]),
+                                id=utils.rand(20),
+                            )
+                        ],
+                        cache_time=0,
+                    )
                 case _ if "photo" in form:
                     await inline_query.answer(
                         [

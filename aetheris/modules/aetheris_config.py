@@ -1780,9 +1780,6 @@ class AetherisConfigMod(loader.Module):
 
         await self.inline__choose_category(message)
 
+    @loader.command(alias="cfg")
     async def configcmd(self, message: Message):
-        await self._configcmd_impl(message)
-
-    @loader.command(alias="fcfg")
-    async def cfgcmd(self, message: Message):
         await self._configcmd_impl(message)
