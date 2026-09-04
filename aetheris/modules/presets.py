@@ -128,7 +128,7 @@ class Presets(loader.Module):
     async def _menu(self):
         await self.inline.bot.send_photo(
             self._client.tg_id,
-            "https://x0.at/atRN.png",
+            "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
             caption=self.strings["welcome"],
             reply_markup=self.inline.generate_markup(self._markup_gen()),
         )
@@ -349,7 +349,7 @@ class Presets(loader.Module):
         """| Packs of modules to load"""
         await self.inline.form(
             message=message,
-            photo="https://x0.at/atRN.png",
+            photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
             text=self.strings["welcome"].replace(
                 "/presets", self.get_prefix() + "presets"
             ),

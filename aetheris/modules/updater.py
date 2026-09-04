@@ -270,7 +270,7 @@ class UpdaterMod(loader.Module):
             if manual_update:
                 m = await self.inline.bot.send_photo(
                     self.tg_id,
-                    "https://x0.at/atRN.png",
+                    "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
                     caption=self.strings["update_required"].format(
                         current[:6],
                         '<a href="https://github.com/elisartix/Aetheris/compare/{}...{}">{}</a>'.format(
@@ -293,7 +293,7 @@ class UpdaterMod(loader.Module):
             else:
                 m = await self.inline.bot.send_photo(
                     self.tg_id,
-                    "https://x0.at/atRN.png",
+                    "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
                     caption=self.strings["autoupdate_notifier"].format(
                         self._pending[:6],
                         changelog,

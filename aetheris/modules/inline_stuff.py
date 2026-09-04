@@ -116,7 +116,7 @@ class InlineStuff(loader.Module):
         match message.text:
             case "/start":
                 await message.answer_photo(
-                    "https://x0.at/atRN.png",
+                    "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
                     caption=self.strings["this_is_aetheris"].format(
                         (
                             "<tg-emoji emoji-id=5463379725441341739>🪐</tg-emoji>"
@@ -149,7 +149,7 @@ class InlineStuff(loader.Module):
                     pass
                 else:
                     await message.answer_photo(
-                        "https://x0.at/atRN.png",
+                        "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
                         caption=self.strings["profile_cmd"].format(
                             prefix=self.get_prefix(),
                             ram_usage=utils.get_ram_usage(),

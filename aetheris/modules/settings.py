@@ -121,7 +121,7 @@ class CoreMod(loader.Module):
                 build=utils.get_commit_url(),
                 htl_version=f"{aetheris_tl.__version__} #{aetheris_tl.tl.alltlobjects.LAYER}",
                 branch=branch_text.replace("\r\n", "<br>").replace("\n", "<br>"),
-                banner_url="https://x0.at/atRN.png",
+                banner_url="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
             )
             await utils.answer(
                 message,
@@ -146,7 +146,7 @@ class CoreMod(loader.Module):
             + '\n<blockquote>♡ fork of <b>Heroku</b> by '
             '<a href="t.me/codrago">@codrago</a>, '
             '<a href="t.me/zetgo">@zetgo</a></blockquote>',
-            file="https://x0.at/atRN.png",
+            file="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
             reply_to=getattr(message, "reply_to_msg_id", None),
         )
 
@@ -680,13 +680,13 @@ class CoreMod(loader.Module):
                 self.strings["choose_installation"],
                 message,
                 reply_markup=self._markup(),
-                photo="https://x0.at/atRN.png",
+                photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
             )
         ):
 
             await self.client.send_file(
                 message.peer_id,
-                "https://x0.at/atRN.png",
+                "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
                 caption=self.strings["vds_install"],
                 reply_to=getattr(message, "reply_to_msg_id", None),
             )

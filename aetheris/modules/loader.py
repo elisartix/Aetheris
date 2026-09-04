@@ -550,7 +550,7 @@ class LoaderMod(loader.Module):
                 "💫 <b>Joined <a"
                 f' href="https://t.me/{channel.username}">{utils.escape_html(channel.title)}</a></b>'
             ),
-            photo="https://x0.at/atRN.png",
+            photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
         )
 
     async def install_requirements(self, requirements: list):

@@ -343,7 +343,7 @@ class Module:
                 "✖️ <b>Declined joining <a"
                 f' href="https://t.me/{channel.username}">{utils.escape_html(channel.title)}</a></b>'
             ),
-            photo="https://x0.at/atRN.png",
+            photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
         )
 
     async def request_join(
@@ -407,7 +407,7 @@ class Module:
 
         await self.inline.bot.send_photo(
             self.tg_id,
-            "https://x0.at/atRN.png",
+            "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
             caption=(
                 self._client.loader.lookup("translations")
                 .strings("requested_join")
