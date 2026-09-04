@@ -11,6 +11,8 @@
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
 import contextlib
+from pathlib import Path
+
 import aetheris_tl
 from aetheris_tl.tl.types import Message, User
 
@@ -121,7 +123,7 @@ class CoreMod(loader.Module):
                 build=utils.get_commit_url(),
                 htl_version=f"{aetheris_tl.__version__} #{aetheris_tl.tl.alltlobjects.LAYER}",
                 branch=branch_text.replace("\r\n", "<br>").replace("\n", "<br>"),
-                banner_url="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+                banner_url="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
             )
             await utils.answer(
                 message,
@@ -146,7 +148,7 @@ class CoreMod(loader.Module):
             + '\n<blockquote>♡ fork of <b>Heroku</b> by '
             '<a href="t.me/codrago">@codrago</a>, '
             '<a href="t.me/zetgo">@zetgo</a></blockquote>',
-            file="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+            file=str(Path(main.BASE_PATH) / "aetheris_info.png"),
             reply_to=getattr(message, "reply_to_msg_id", None),
         )
 
@@ -680,13 +682,13 @@ class CoreMod(loader.Module):
                 self.strings["choose_installation"],
                 message,
                 reply_markup=self._markup(),
-                photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+                photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
             )
         ):
 
             await self.client.send_file(
                 message.peer_id,
-                "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+                "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
                 caption=self.strings["vds_install"],
                 reply_to=getattr(message, "reply_to_msg_id", None),
             )
