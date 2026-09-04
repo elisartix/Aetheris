@@ -148,7 +148,7 @@ class AetherisBackupMod(loader.Module):
             with zipfile.ZipFile(mods, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for root, _, files in os.walk(loader.LOADED_MODULES_DIR):
                     for file in files:
-                        if file.endswith(f"{self.tg_id}.py"):
+                        if file.endswith(".py"):
                             with open(os.path.join(root, file), "rb") as f:
                                 zipf.writestr(file, f.read())
                 zipf.writestr(
@@ -395,7 +395,7 @@ class AetherisBackupMod(loader.Module):
         with zipfile.ZipFile(result, "w", zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(loader.LOADED_MODULES_DIR):
                 for file in files:
-                    if file.endswith(f"{self.tg_id}.py"):
+                    if file.endswith(".py"):
                         with open(os.path.join(root, file), "rb") as f:
                             zipf.writestr(file, f.read())
                             mods_quantity += 1
@@ -501,7 +501,7 @@ class AetherisBackupMod(loader.Module):
         with zipfile.ZipFile(mods, "w", zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(loader.LOADED_MODULES_DIR):
                 for file in files:
-                    if file.endswith(f"{self.tg_id}.py"):
+                    if file.endswith(".py"):
                         with open(os.path.join(root, file), "rb") as f:
                             zipf.writestr(file, f.read())
             zipf.writestr(

@@ -126,6 +126,13 @@ def restart():
     if "--sandbox" in " ".join(sys.argv):
         exit(0)
 
+    # Under systemd, let Restart=always spawn a clean process. Using os.execl
+    # here preserves AETHERIS_DO_NOT_RESTART* and causes a false version error
+    # after normal startup migrations/restarts.
+    if "INVOCATION_ID" in os.environ:
+        print("🔄 Restarting via systemd...")
+        sys.exit(0)
+
     if "AETHERIS_DO_NOT_RESTART2" in os.environ:
         print(
             "AetherisTL version 1.0.2 or higher is required, use `pip install aetheris-tl-new -U` for update."

@@ -606,9 +606,14 @@ class TelegramLogsHandler(logging.Handler):
 
 
 async def check_branch(me_id: int, allowed_ids: list, self):
+    # Disabled for Aetheris fork: never log out or restart a valid account
+    # solely because the repository runs on dev/beta branches.
+    return
     if os.environ.get("AETHERIS_NO_GIT") == "1":
         return
     repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    if get_branch_name(repo_path) == "dev":
+        return
 
     try:
         with git.Repo(path=repo_path) as repo:

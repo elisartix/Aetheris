@@ -54,6 +54,34 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+# --- Shared multi-account database -------------------------------------
+# All clients of this process read/write ONE common store, so every account
+# has the same modules and the same module configs. Namespaces listed in
+# PER_ACCOUNT_NAMESPACES are kept separate per account: inline bot tokens
+# must not be shared (two clients polling the same bot = 409 conflict) and
+# every account owns its own service channels.
+# Per-account data lives in the store under ACCOUNTS_KEY -> "<tg_id>".
+_SHARED_STORE: dict | None = None
+_STORE_LOADED: bool = False
+_DATABASES: list["Database"] = []
+
+
+def _get_shared_store() -> dict:
+    global _SHARED_STORE
+    if _SHARED_STORE is None:
+        _SHARED_STORE = {}
+    return _SHARED_STORE
+
+
+PER_ACCOUNT_NAMESPACES = frozenset(
+    {
+        "aetheris.inline",
+        "aetheris.inline.token_obtainment",
+        "aetheris.forums",
+    }
+)
+ACCOUNTS_KEY = "@accounts"
+
 
 class NoAssetsChannel(Exception):
     """Raised when trying to read/store asset with no asset channel present"""
@@ -72,9 +100,159 @@ class Database(dict):
         self._me: User = None
         self._redis: redis.Redis = None
         self._saving_task: asyncio.Future = None
+        _DATABASES.append(self)
 
     def __repr__(self):
         return object.__repr__(self)
+
+    # --- Shared multi-account routing ---------------------------------
+    # The module-level `_SHARED_STORE` dict is the single source of truth.
+    # Each Database instance keeps its own dict contents in sync as a merged
+    # view (shared data + this account's per-account namespaces), so legacy
+    # serialization via `json.dumps(db)` / `orjson.dumps(db)` keeps working.
+
+    @staticmethod
+    def _is_per_account(owner: typing.Any) -> bool:
+        return isinstance(owner, str) and owner in PER_ACCOUNT_NAMESPACES
+
+    def _tg_key(self) -> str:
+        return str(getattr(self._client, "tg_id", ""))
+
+    def _account_area(self, *, create: bool = True) -> dict:
+        accounts = _get_shared_store().setdefault(ACCOUNTS_KEY, {})
+        if not create:
+            return accounts.get(self._tg_key(), {})
+        return accounts.setdefault(self._tg_key(), {})
+
+    def _target(self, owner: typing.Any) -> dict:
+        if self._is_per_account(owner):
+            return self._account_area()
+        return _get_shared_store()
+
+    @staticmethod
+    def _merged_view_for(tg_key: str) -> dict:
+        store = _get_shared_store()
+        view = {k: v for k, v in store.items() if k != ACCOUNTS_KEY}
+        view.update(store.get(ACCOUNTS_KEY, {}).get(tg_key, {}))
+        return view
+
+    def _merged_view(self) -> dict:
+        return self._merged_view_for(self._tg_key())
+
+    def _propagate(self) -> None:
+        """Refresh the merged dict view of every live Database instance."""
+        for db in list(_DATABASES):
+            tg_key = str(getattr(db._client, "tg_id", ""))
+            if not tg_key:
+                continue
+            super(Database, db).clear()
+            for k, v in self._merged_view_for(tg_key).items():
+                super(Database, db).__setitem__(k, v)
+
+    # --- dict protocol (routed to the shared store) --------------------
+
+    def __getitem__(self, owner):
+        if self._is_per_account(owner):
+            return self._account_area(create=False)[owner]
+        store = _get_shared_store()
+        if owner != ACCOUNTS_KEY and owner in store:
+            return store[owner]
+        raise KeyError(owner)
+
+    def __setitem__(self, owner, value):
+        if not utils.is_serializable(owner):
+            raise RuntimeError(
+                "Attempted to write object to "
+                f"{owner=} ({type(owner)=}) of database. It is not "
+                "JSON-serializable key which will cause errors"
+            )
+
+        if not utils.is_serializable(value):
+            raise RuntimeError(
+                "Attempted to write object of "
+                f"{owner=} ({type(value)=}) to database. It is not "
+                "JSON-serializable value which will cause errors"
+            )
+
+        self._target(owner)[owner] = value
+        self._propagate()
+
+    def __delitem__(self, owner):
+        deleted = False
+        store = _get_shared_store()
+        if owner != ACCOUNTS_KEY and owner in store:
+            del store[owner]
+            deleted = True
+        area = self._account_area(create=False)
+        if owner in area:
+            del area[owner]
+            deleted = True
+        if not deleted:
+            raise KeyError(owner)
+        self._propagate()
+
+    def __contains__(self, owner) -> bool:
+        if owner == ACCOUNTS_KEY:
+            return False
+        if self._is_per_account(owner):
+            return owner in self._account_area(create=False)
+        return owner in _get_shared_store()
+
+    def __iter__(self):
+        return iter(self._merged_view())
+
+    def __len__(self) -> int:
+        return len(self._merged_view())
+
+    def keys(self):
+        return self._merged_view().keys()
+
+    def values(self):
+        return self._merged_view().values()
+
+    def items(self):
+        return self._merged_view().items()
+
+    def copy(self):
+        return self._merged_view()
+
+    def setdefault(self, owner, default=None):
+        try:
+            return self.__getitem__(owner)
+        except KeyError:
+            self.__setitem__(owner, default)
+            return default
+
+    def pop(self, owner, *args):
+        try:
+            value = self.__getitem__(owner)
+        except KeyError:
+            if args:
+                return args[0]
+            raise
+        self.__delitem__(owner)
+        return value
+
+    def popitem(self):
+        view = self._merged_view()
+        if not view:
+            raise KeyError("dictionary is empty")
+        owner = next(iter(view))
+        return owner, self.pop(owner)
+
+    def update(self, *args, **kwargs) -> None:
+        items = dict(*args, **kwargs)
+        for owner, value in items.items():
+            self.__setitem__(owner, value)
+
+    def clear(self) -> None:
+        store = _get_shared_store()
+        for key in [k for k in store if k != ACCOUNTS_KEY]:
+            del store[key]
+        self._account_area(create=False).clear()
+        self._propagate()
+
+    # --- persistence ----------------------------------------------------
 
     def _redis_save_sync(self):
         with self._redis.pipeline() as pipe:
@@ -118,7 +296,9 @@ class Database(dict):
         if os.environ.get("REDIS_URL") or main.get_config_key("redis_uri"):
             await self.redis_init()
 
-        self._db_file = main.BASE_PATH / f"config-{self._client.tg_id}.json"
+        # Shared multi-account mode: every client reads/writes one common DB
+        # file instead of per-account config-<tg_id>.json.
+        self._db_file = main.BASE_PATH / "config-shared.json"
         self.read()
 
     async def ensure_content_channel(self):
@@ -169,39 +349,56 @@ class Database(dict):
 
     def read(self):
         """Read database and stores it in self"""
+        global _STORE_LOADED
+
         if self._redis:
             try:
-                self._update_from_read(
-                    json.loads(
-                        self._redis.get(
-                            str(self._client.tg_id),
-                        ).decode(),
-                    ),
+                data = json.loads(
+                    self._redis.get(
+                        str(self._client.tg_id),
+                    ).decode(),
                 )
             except Exception:
                 logger.exception("Error reading redis database")
+                data = {}
+
+            if not _STORE_LOADED:
+                _get_shared_store().update(data)
+                _STORE_LOADED = True
+            self._propagate()
             return
 
-        try:
-            db = self._db_file.read_text()
-            if re.search(r'"(hikka\.)(\S+\":)', db):
-                logging.warning("Converting db after update (hikka → aetheris)")
-                db = re.sub(r"(hikka\.)(\S+\":)", lambda m: "aetheris." + m.group(2), db)
-            if re.search(r'"(legacy\.)(\S+\":)', db):
-                logging.warning("Converting db after update (legacy → aetheris)")
-                db = re.sub(r"(legacy\.)(\S+\":)", lambda m: "aetheris." + m.group(2), db)
-            if re.search(r'"(heroku\.)(\S+\":)', db):
-                logging.warning("Converting db after update (heroku → aetheris)")
-                db = re.sub(r"(heroku\.)(\S+\":)", lambda m: "aetheris." + m.group(2), db)
-            self._update_from_read(json.loads(db))
-        except json.decoder.JSONDecodeError:
-            logger.warning("Database read failed! Creating new one...")
-        except FileNotFoundError:
-            logger.debug("Database file not found, creating new one...")
+        if not _STORE_LOADED:
+            store = _get_shared_store()
+            try:
+                db = self._db_file.read_text()
+                if re.search(r'"(hikka\.)(\S+\":)', db):
+                    logging.warning("Converting db after update (hikka → aetheris)")
+                    db = re.sub(
+                        r"(hikka\.)(\S+\":)", lambda m: "aetheris." + m.group(2), db
+                    )
+                if re.search(r'"(legacy\.)(\S+\":)', db):
+                    logging.warning("Converting db after update (legacy → aetheris)")
+                    db = re.sub(
+                        r"(legacy\.)(\S+\":)", lambda m: "aetheris." + m.group(2), db
+                    )
+                if re.search(r'"(heroku\.)(\S+\":)', db):
+                    logging.warning("Converting db after update (heroku → aetheris)")
+                    db = re.sub(
+                        r"(heroku\.)(\S+\":)", lambda m: "aetheris." + m.group(2), db
+                    )
+                store.update(json.loads(db))
+            except json.decoder.JSONDecodeError:
+                logger.warning("Database read failed! Creating new one...")
+            except FileNotFoundError:
+                logger.debug("Database file not found, creating new one...")
+            _STORE_LOADED = True
+
+        self._propagate()
 
     def _update_from_read(self, items: dict) -> None:
         """Update DB from persisted storage without write-protection checks."""
-        super().update(items)
+        self.update(items)
 
     def process_db_autofix(self, db: dict) -> bool:
         if not utils.is_serializable(db):
@@ -275,7 +472,7 @@ class Database(dict):
             return True
 
         try:
-            self._db_file.write_text(json.dumps(self, indent=4))
+            self._db_file.write_text(json.dumps(_get_shared_store(), indent=4))
         except Exception:
             logger.exception("Database save failed!")
             return False
@@ -322,7 +519,7 @@ class Database(dict):
 
         if not (_content_channel_id := self.get("aetheris.forums", "channel_id", None)):
             raise NoContentChannel(
-                "Tried to save asset with non-existing content channel."
+                "Tried to fetch asset with non-existing content channel."
             )
 
         try:
@@ -395,29 +592,9 @@ class Database(dict):
         if owner.startswith("heroku."):
             owner = "aetheris." + owner[len("heroku.") :]
 
-        super().setdefault(owner, {})[key] = value
+        self._target(owner).setdefault(owner, {})[key] = value
+        self._propagate()
         return self.save()
-
-    def __setitem__(self, owner: str, value: JSONSerializable) -> None:
-        if not utils.is_serializable(owner):
-            raise RuntimeError(
-                "Attempted to write object to "
-                f"{owner=} ({type(owner)=}) of database. It is not "
-                "JSON-serializable key which will cause errors"
-            )
-
-        if not utils.is_serializable(value):
-            raise RuntimeError(
-                "Attempted to write object of "
-                f"{owner=} ({type(value)=}) to database. It is not "
-                "JSON-serializable value which will cause errors"
-            )
-
-        super().__setitem__(owner, value)
-
-    def update(self, *args, **kwargs) -> None:
-        items = dict(*args, **kwargs)
-        return super().update(items)
 
     def pointer(
         self,

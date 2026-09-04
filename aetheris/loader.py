@@ -852,14 +852,14 @@ class Modules:
                     Path(mod).resolve()
                     for mod in _iter_module_files(
                         LOADED_MODULES_DIR,
-                        include=lambda name: name.endswith(f"{self.client.tg_id}.py"),
+                        include=lambda name: not re.search(r"_\d{6,}\.py$", name),
                     )
                 ]
                 + [
                     Path(mod).resolve()
                     for mod in _iter_module_dirs(
                         LOADED_MODULES_DIR,
-                        include=lambda name: name.endswith(f"_{self.client.tg_id}"),
+                        include=lambda name: not re.search(r"_\d{6,}$", name),
                     )
                 ]
             )
@@ -1051,7 +1051,7 @@ class Modules:
         if save_fs:
             path = os.path.join(
                 LOADED_MODULES_DIR,
-                f"{cls_name}_{self.client.tg_id}.py",
+                f"{cls_name}.py",
             )
 
             if origin == "<string>":
@@ -1529,8 +1529,7 @@ class Modules:
             if pack_url and (
                 transations := await self.translator.load_module_translations(
                     pack_url,
-                    MODULES_LANGPACKS_PATH
-                    / f"{self.client.tg_id}_{mod.__class__.__name__}.yml",
+                    MODULES_LANGPACKS_PATH / f"{mod.__class__.__name__}.yml",
                 )
             ):
                 mod.strings.external_strings = transations
@@ -1588,7 +1587,7 @@ class Modules:
                 name = module.__class__.__name__
                 path = os.path.join(
                     LOADED_MODULES_DIR,
-                    f"{name}_{self.client.tg_id}.py",
+                    f"{name}.py",
                 )
 
                 if os.path.isfile(path):
@@ -1597,7 +1596,7 @@ class Modules:
 
                 package_path = os.path.join(
                     LOADED_MODULES_DIR,
-                    f"{name}_{self.client.tg_id}",
+                    f"{name}",
                 )
 
                 if os.path.isdir(package_path):
@@ -1605,7 +1604,6 @@ class Modules:
                     logger.debug("Removed %s package at path %s", name, package_path)
 
                 with contextlib.suppress(Exception):
-                    _external_packages_finder.unregister(f"{name}_{self.client.tg_id}")
                     _external_packages_finder.unregister(name)
 
                 logger.debug("Removing module %s for unload", module)

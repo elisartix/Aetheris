@@ -202,10 +202,8 @@ class AetherisWebMod(loader.Module):
                 lambda: redis.set(str(new_id), json.dumps(data, ensure_ascii=True))
             )
 
-        (Path(main.BASE_PATH) / f"config-{new_id}.json").write_text(
-            json.dumps(data, ensure_ascii=False, indent=4),
-            encoding="utf-8",
-        )
+        # Shared multi-account mode: the DB is common for every account,
+        # there is nothing to copy into a per-account file.
 
     async def _save_switch_session(
         self,
@@ -223,21 +221,9 @@ class AetherisWebMod(loader.Module):
         await client.disconnect()
 
     def _switch_loaded_modules(self, old_id: int, new_id: int, suffix: int) -> list:
-        moved = []
-        for path in LOADED_MODULES_PATH.glob(f"*_{old_id}.py"):
-            target = path.with_name(
-                path.name.removesuffix(f"_{old_id}.py") + f"_{new_id}.py"
-            )
-            backup = None
-            if target.exists():
-                backup = self._archive_identity_file(target, suffix)
-
-            record = [path, target, backup, False]
-            moved.append(record)
-            path.rename(target)
-            record[3] = True
-
-        return moved
+        # Shared multi-account mode: module files are common for every
+        # account (no _<tg_id> suffix), there is nothing to move.
+        return []
 
     def _restore_loaded_modules(self, moved: list) -> None:
         for original, target, backup, renamed in reversed(moved):

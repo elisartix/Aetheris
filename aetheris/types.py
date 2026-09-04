@@ -343,7 +343,7 @@ class Module:
                 "✖️ <b>Declined joining <a"
                 f' href="https://t.me/{channel.username}">{utils.escape_html(channel.title)}</a></b>'
             ),
-            photo="https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/aetheris/declined_jr.png",
+            photo="https://x0.at/atRN.png",
         )
 
     async def request_join(
@@ -407,7 +407,7 @@ class Module:
 
         await self.inline.bot.send_photo(
             self.tg_id,
-            "https://raw.githubusercontent.com/coddrago/assets/refs/heads/main/aetheris/join_request.png",
+            "https://x0.at/atRN.png",
             caption=(
                 self._client.loader.lookup("translations")
                 .strings("requested_join")

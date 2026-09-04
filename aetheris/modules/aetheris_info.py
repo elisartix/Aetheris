@@ -52,7 +52,7 @@ class AetherisInfoMod(loader.Module):
             ),
             loader.ConfigValue(
                 "banner_url",
-                "https://raw.githubusercontent.com/elisartix/assets/refs/heads/main/aetheris/aetheris_info.png",
+                "https://x0.at/atRN.png",
                 lambda: self.strings["_cfg_banner"],
                 validator=loader.validators.RandomLink(),
             ),
