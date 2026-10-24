@@ -38,7 +38,7 @@ class InlineMessage:
                 else None
             )
             await self.inline_manager.bot.edit_rich_message(
-                rich_message,
+                rich_message=rich_message,
                 inline_message_id=self.inline_message_id,
                 reply_markup=rich_markup,
             )
@@ -201,7 +201,7 @@ class BotInlineMessage:
                 else None
             )
             await self.inline_manager.bot.edit_rich_message(
-                rich_message,
+                rich_message=rich_message,
                 chat_id=self.chat_id,
                 message_id=self.message_id,
                 reply_markup=rich_markup,

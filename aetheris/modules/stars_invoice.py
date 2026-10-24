@@ -4,7 +4,10 @@
 import re
 import logging
 
-from telethon.tl import types
+try:
+    from aetheris_tl.tl import types
+except ImportError:  # Legacy installations without the vendored MTProto package.
+    from telethon.tl import types
 from .. import loader, utils
 
 logger = logging.getLogger(__name__)

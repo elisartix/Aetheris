@@ -528,6 +528,79 @@ def make_button(
     web_app: str | dict | None = None,
     copy_text: str | None = None,
 ):
+    # Layer 230 moved inline button payloads into KeyboardInlineButton
+    # (layer 229's KeyboardButton* constructors are retained by the helper).
+    # Detect the native schema rather than relying on the imported library's
+    # reported layer: old external modules can still expose a mixed schema.
+    native = all(
+        hasattr(types, name)
+        for name in (
+            "KeyboardInlineButton",
+            "InlineButtonTypeCallback",
+            "InlineButtonTypeUrl",
+            "InlineButtonTypeSwitchInline",
+            "InlineButtonTypeWebView",
+            "InlineButtonTypeCopy",
+            "KeyboardButtonStyle",
+        )
+    )
+
+    if native:
+        def native_style():
+            if style is None and icon is None:
+                return None
+            if style is not None and style not in {"primary", "danger", "success"}:
+                raise ValueError(
+                    "Invalid value. Must be either one of 'primary', 'danger', "
+                    "'success', or None"
+                )
+            kwargs = {"icon": icon}
+            if style is not None:
+                kwargs[f"bg_{style}"] = True
+            return types.KeyboardButtonStyle(**kwargs)
+
+        def native_button(payload):
+            return types.KeyboardInlineButton(text, payload, style=native_style())
+
+        if url is not None:
+            return native_button(types.InlineButtonTypeUrl(url=url))
+
+        if data is not None:
+            if isinstance(data, str):
+                data = data.encode("utf-8")
+            elif not isinstance(data, (bytes, bytearray, memoryview)):
+                data = str(data).encode("utf-8")
+            if len(data) > 64:
+                raise ValueError("Too many bytes for the data")
+            return native_button(types.InlineButtonTypeCallback(data=bytes(data)))
+
+        if switch_inline_query_current_chat is not None:
+            return native_button(
+                types.InlineButtonTypeSwitchInline(
+                    query=switch_inline_query_current_chat, same_peer=True
+                )
+            )
+
+        if switch_inline_query is not None:
+            return native_button(
+                types.InlineButtonTypeSwitchInline(
+                    query=switch_inline_query, same_peer=False
+                )
+            )
+
+        if web_app is not None:
+            app_url = web_app if isinstance(web_app, str) else web_app["url"]
+            return native_button(types.InlineButtonTypeWebView(url=app_url))
+
+        if copy_text is not None:
+            return native_button(types.InlineButtonTypeCopy(copy_text=copy_text))
+
+        default_data = text.encode("utf-8")
+        if len(default_data) > 64:
+            raise ValueError("Too many bytes for the data")
+        return native_button(types.InlineButtonTypeCallback(data=default_data))
+
+    # Layer 229 (and older/mixed third-party TL packages).
     if url is not None:
         return Button.url(text, url, style=style, icon=icon)
 

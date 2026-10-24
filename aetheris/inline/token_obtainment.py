@@ -4,9 +4,9 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -132,7 +132,7 @@ class TokenObtainment(InlineUnit):
 
                 if "DOCKER" in os.environ:
                     m = await conv.send_file(
-                        "https://raw.githubusercontent.com/coddrago/Aetheris/refs/heads/master/assets/aetheris-ava.png"
+                        "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris-ava.png"
                     )
                 else:
                     m = await conv.send_file(

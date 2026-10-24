@@ -4,9 +4,9 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -172,7 +172,12 @@ class BaseTranslator:
             except Exception:
                 logger.exception("Failed to save `%s`'s cache copy", pack_url)
 
-        if any(len(key) != 2 for key in data):
+        if any(not isinstance(key, str) or len(key) != 2 for key in data):
+            # Non-language-keyed pack (module strings). Guard against garbage
+            # responses like "404: Not Found" which yaml parses as {404: "..."}
+            if any(not isinstance(key, str) for key in data):
+                logger.warning("Skipping garbage langpack from %s", pack_url)
+                return {}
             return data
 
         if lang := self.db.get(__name__, "lang", False):

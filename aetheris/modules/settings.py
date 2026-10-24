@@ -4,9 +4,9 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -146,7 +146,7 @@ class CoreMod(loader.Module):
             )
             + (branch_text)
             + '\n<blockquote>♡ fork of <b>Heroku</b> by '
-            '<a href="t.me/codrago">@codrago</a>, '
+            '<a href="t.me/elisartix">@elisartix</a>, '
             '<a href="t.me/zetgo">@zetgo</a></blockquote>',
             file=str(Path(main.BASE_PATH) / "aetheris_info.png"),
             reply_to=getattr(message, "reply_to_msg_id", None),

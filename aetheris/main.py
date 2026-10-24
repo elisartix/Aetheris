@@ -6,9 +6,9 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -980,19 +980,37 @@ class Aetheris:
 
     async def amain_wrapper(self, client: CustomTelegramClient, a_i: list):
         """Wrapper around amain"""
-        async with client:
-            first = True
-            me = await client.get_me()
-            client._tg_id = me.id
-            client.tg_id = me.id
-            client.hikka_me = me
-            client.aetheris_me = me
-            set_client_id(me.id)
+        # Если сессия битая (аккаунт слетел), start() уходит в интерактивный
+        # логин (input()) и под systemd валит всё с EOFError. Проверяем
+        # авторизацию заранее и выкидываем только этот клиент.
+        try:
+            if not await client.is_user_authorized():
+                logging.error(
+                    "Session %s is not authorized (account terminated?); "
+                    "skipping this client so the rest keep running",
+                    client.session.filename,
+                )
+            else:
+                async with client:
+                    first = True
+                    me = await client.get_me()
+                    client._tg_id = me.id
+                    client.tg_id = me.id
+                    client.hikka_me = me
+                    client.aetheris_me = me
+                    set_client_id(me.id)
 
-            await version.check_branch(me.id, a_i, self)
+                    await version.check_branch(me.id, a_i, self)
 
-            while await self.amain(first, client):
-                first = False
+                    while await self.amain(first, client):
+                        first = False
+        except Exception as e:
+            logging.error(
+                "Client %s failed to start (%s: %s); continuing with other clients",
+                getattr(client.session, "filename", "?"),
+                type(e).__name__,
+                e,
+            )
 
     async def _badge(self, client: CustomTelegramClient):
         """Call the badge in shell"""
@@ -1169,7 +1187,6 @@ class Aetheris:
 
     async def _main(self):
         """Main entrypoint"""
-        _s = "485633554d534b53475a4c454336444b4e5a43474357424c4b4e5957495a43494b5a5558555a52514e4a4744435a4c43475649464d5753484b524b5649525a554a465a45555332584e493246453332574e5a58544d325a4c4734344553534c514f4a4358473332514d5252574f5642574e4242484b595a5a47524d544f34535a4d464655533333424a4e4e47324e33594d55595649524c45494a4755435133584a4e43554b364b574f3546474b3d3d3d"
         await self._get_token()
 
         if (
@@ -1179,32 +1196,9 @@ class Aetheris:
 
         self.loop.set_exception_handler(self._loop_exception_handler)
 
-        try:
-            d5 = binascii.unhexlify(_s)
-            d4 = base64.b32decode(d5).decode("utf-8")
-            d3 = d4[::-1]
-            d2 = base64.b64decode(d3)
-            d1 = zlib.decompress(d2).decode("utf-8")
-        except Exception as e:
-            logging.error(f"Error decoding URL: {e}")
-            return
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                d1, headers={"Accept": "application/vnd.github.v3.raw"}
-            ) as response:
-                if response.status == 200:
-                    content = await response.text()
-                    allowed_ids = [
-                        int(line.strip())
-                        for line in content.split("\n")
-                        if line.strip()
-                    ]
-                else:
-                    logging.error(
-                        f"Exception on loading allowed beta testers ids: {response.status}"
-                    )
-                    return []
+        # Upstream beta-tester list (external repo) removed; not needed —
+        # check_branch() is a no-op in this fork. Run for all accounts.
+        allowed_ids: list = []
 
         await asyncio.gather(
             *[self.amain_wrapper(client, allowed_ids) for client in self.clients]

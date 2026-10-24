@@ -1,6 +1,6 @@
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -96,7 +96,7 @@ class LoaderRestrictor(loader.Module):
             answers=[
                 PollAnswer(
                     text=TextWithEntities(*html.parse(self.strings[ans])),
-                    option=str(i),
+                    option=str(i).encode("utf-8"),
                 )
                 for i, ans in enumerate(poll_step.answer_keys)
             ],

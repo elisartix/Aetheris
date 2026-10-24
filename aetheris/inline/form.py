@@ -4,9 +4,9 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -469,14 +469,14 @@ class Form(InlineUnit):
             match True:
                 case _ if "rich_message" in form:
                     rich_value = form["rich_message"]
-                    if not isinstance(rich_value, str):
-                        raise TypeError("Inline bot Rich forms require HTML text")
+                    rich_html = rich_value if isinstance(rich_value, str) else (form.get("rich_html") or form.get("text") or " ")
                     await inline_query.answer(
                         [
                             await inline_query.rich_article(
                                 title="Aetheris",
-                                html=rich_value,
-                                buttons=self.generate_markup(form["uid"]),
+                                html=rich_html,
+                                rich_message=None if isinstance(rich_value, str) else rich_value,
+                                buttons=None,
                                 id=utils.rand(20),
                             )
                         ],

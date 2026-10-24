@@ -4,9 +4,9 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -343,7 +343,7 @@ class Module:
                 "✖️ <b>Declined joining <a"
                 f' href="https://t.me/{channel.username}">{utils.escape_html(channel.title)}</a></b>'
             ),
-            photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+            photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
         )
 
     async def request_join(
@@ -407,7 +407,7 @@ class Module:
 
         await self.inline.bot.send_photo(
             self.tg_id,
-            "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+            "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
             caption=(
                 self._client.loader.lookup("translations")
                 .strings("requested_join")

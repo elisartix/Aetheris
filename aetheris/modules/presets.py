@@ -4,9 +4,9 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
@@ -50,11 +50,7 @@ PRESETS = {
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/Complements.py",
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/Compliments.py",
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/mazemod.py",
-        "https://mods.codrago.life/randnum.py",
-        "https://mods.codrago.life/DoxTool.py",
-        "https://mods.codrago.life/randomizer.py",
         "https://mods.kok.gay/yg_quotes",
-        "https://raw.githubusercontent.com/coddrago/modules/main/hardspam.py",
     ],
     "chat": [
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/activists.py",
@@ -65,11 +61,8 @@ PRESETS = {
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/BanMedia.py",
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/swmute.py",
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/filter.py",
-        "https://mods.codrago.life/id.py",
-        "https://mods.codrago.life/autoclicker.py",
         "https://raw.githubusercontent.com/SenkoGuardian/SenModules/refs/heads/My-Modules/Gemini.py",
         "https://raw.githubusercontent.com/yummy1gay/modules/main/yg_checks.py",
-        "https://raw.githubusercontent.com/coddrago/modules/main/chatmodule.py",
     ],
     "service": [
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/account_switcher.py",
@@ -85,7 +78,6 @@ PRESETS = {
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/searx.py",
         "https://raw.githubusercontent.com/Ruslan-Isaev/modules/refs/heads/main/whois.py",
         "https://raw.githubusercontent.com/radiocycle/Modules/refs/heads/master/Neofetch.py",
-        "https://raw.githubusercontent.com/coddrago/modules/main/dbmod.py",
     ],
     "downloaders": [
         "https://github.com/amm1edev/ame_repo/raw/refs/heads/main/uploader.py",
@@ -128,7 +120,7 @@ class Presets(loader.Module):
     async def _menu(self):
         await self.inline.bot.send_photo(
             self._client.tg_id,
-            "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+            "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
             caption=self.strings["welcome"],
             reply_markup=self.inline.generate_markup(self._markup_gen()),
         )
@@ -349,7 +341,7 @@ class Presets(loader.Module):
         """| Packs of modules to load"""
         await self.inline.form(
             message=message,
-            photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+            photo="https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
             text=self.strings["welcome"].replace(
                 "/presets", self.get_prefix() + "presets"
             ),

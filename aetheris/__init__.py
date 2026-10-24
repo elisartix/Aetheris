@@ -6,16 +6,16 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
-# 🌐 https://github.com/coddrago/Aetheris
+# 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
 # Do not delete this file, it will cause errors.
 
 __author__ = "Dan Gazizullin"
-__ForkAuthor__ = "Codrago"
+__ForkAuthor__ = "elisartix"
 __contact__ = "me@hikariatama.ru"
 __copyright__ = "Copyright 2022, Dan Gazizullin"
 __credits__ = ["LonamiWebs", "penn5"]

@@ -4,7 +4,7 @@
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
 # 🔑 https://www.gnu.org/licenses/agpl-3.0.html
 
-# ©️ Codrago, 2024-2030
+# ©️ elisartix (Aetheris fork), 2024-2030
 # This file is a part of Aetheris Userbot
 # 🌐 https://github.com/elisartix/Aetheris
 # You can redistribute it and/or modify it under the terms of the GNU AGPLv3
@@ -270,7 +270,7 @@ class UpdaterMod(loader.Module):
             if manual_update:
                 m = await self.inline.bot.send_photo(
                     self.tg_id,
-                    "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+                    "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
                     caption=self.strings["update_required"].format(
                         current[:6],
                         '<a href="https://github.com/elisartix/Aetheris/compare/{}...{}">{}</a>'.format(
@@ -293,7 +293,7 @@ class UpdaterMod(loader.Module):
             else:
                 m = await self.inline.bot.send_photo(
                     self.tg_id,
-                    "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/aetheris_info.png",
+                    "https://raw.githubusercontent.com/elisartix/assets/main/aetheris/banner_v2.png",
                     caption=self.strings["autoupdate_notifier"].format(
                         self._pending[:6],
                         changelog,
